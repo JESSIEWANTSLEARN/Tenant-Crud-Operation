@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LMS Cyber Defense Challenge</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 16px;
+        }
+
+        h1 {
+            color: #38bdf8;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #cbd5e1;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background: #334155;
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .controls, .block-box {
+            margin: 20px 0;
+        }
+
+        button {
+            background: #38bdf8;
+            color: #020617;
+            border: none;
+            padding: 10px 16px;
+            margin: 5px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #7dd3fc;
+        }
+
+        .reset {
+            background: #ef4444;
+            color: white;
+        }
+
+        input {
+            padding: 11px;
+            width: 260px;
+            border-radius: 8px;
+            border: none;
+        }
+
+        .message {
+            background: #020617;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #38bdf8;
+            min-height: 20px;
+        }
+
+        .logs {
+            max-height: 430px;
+            overflow-y: auto;
+        }
+
+        .log {
+            background: #020617;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 5px solid #64748b;
+            font-family: Consolas, monospace;
+        }
+
+        .low { border-left-color: #22c55e; }
+        .medium { border-left-color: #facc15; }
+        .high { border-left-color: #ef4444; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🛡️ LMS Cyber Defense Challenge</h1>
+    <p class="subtitle">Security Analyst Dashboard: Detect and block malicious traffic.</p>
+
+    <div class="dashboard">
+        <div class="card">Score: <span id="score">0</span></div>
+        <div class="card">System Health: <span id="health">100</span>%</div>
+        <div class="card">False Positives: <span id="falsePositive">0</span></div>
+        <div class="card">Blocked IPs: <span id="blockedCount">0</span></div>
+    </div>
+
+    <div class="controls">
+        <button onclick="generateLog()">Generate Log</button>
+        <button onclick="generateMultipleLogs()">Generate 10 Logs</button>
+        <button onclick="resetGame()" class="reset">Reset System</button>
+    </div>
+
+    <div class="block-box">
+        <h2>🚫 Block Suspicious IP</h2>
+        <input type="text" id="ipInput" placeholder="Enter IP (e.g., 45.33.32.1)">
+        <button onclick="blockIP()">Confirm Block</button>
+    </div>
+
+    <div id="message" class="message">System Online. Analyze logs for patterns.</div>
+
+    <h2>📄 Live Security Logs</h2>
+    <div id="logs" class="logs"></div>
+</div>
+
+<script>
+    // Game State
+    let score = 0;
+    let health = 100;
+    let falsePositive = 0;
+    let blockedIPs = [];
+
+    // Aggregated Stats for detection logic
+    let ipData = {};
+
+    const users = ["admin", "teacher", "student", "registrar", "root"];
+    const ipProfiles = {
+        "45.33.32.1": "attacker",
+        "185.99.88.77": "attacker",
+        "192.168.1.10": "suspicious",
+        "203.0.113.20": "suspicious",
+        "10.0.0.5": "normal",
+        "172.16.0.8": "normal",
+        "192.168.1.50": "normal"
+    };
+
+    const eventTypes = {
+        normal: ["PAGE VIEW /home", "PAGE VIEW /profile", "LOGIN SUCCESS", "PASSWORD RESET REQUEST"],
+        suspicious: ["LOGIN FAILED", "LOGIN FAILED", "PAGE VIEW /admin", "LOGIN SUCCESS"],
+        attacker: ["LOGIN FAILED", "LOGIN FAILED", "PAGE VIEW /admin", "FILE ACCESS /config.php", "SQL ERROR NEAR ' OR 1=1 --", "MULTIPLE REQUESTS /login.php"]
+    };
+
+    function generateLog() {
+        if (health <= 0) return;
+
+        const ips = Object.keys(ipProfiles);
+        const ip = ips[Math.floor(Math.random() * ips.length)];
+
+        if (blockedIPs.includes(ip)) {
+            showMessage(`🛡️ Blocked IP ${ip} attempt intercepted.`);
+            score += 5;
+            updateStats();
+            return;
+        }
+
+        const profile = ipProfiles[ip];
+        const event = eventTypes[profile][Math.floor(Math.random() * eventTypes[profile].length)];
+        const user = users[Math.floor(Math.random() * users.length)];
+        const time = new Date().toLocaleTimeString();
+
+        // Updated Detection Logic: Tracking behavior
+        if (!ipData[ip]) ipData[ip] = { failed: 0, critical: false };
+        if (event === "LOGIN FAILED") ipData[ip].failed++;
+        if (event.includes("config.php") || event.includes("SQL")) ipData[ip].critical = true;
+
+        displayLog(`${time} ${event} | User: ${user} | IP: ${ip}`, ip);
+        applyDamage(profile, event);
+        updateStats();
+        checkGameStatus();
+    }
+
+    function calculateRisk(ip) {
+        let risk = 0;
+        let data = ipData[ip] || { failed: 0, critical: false };
+        
+        risk += data.failed * 20;
+        if (data.critical) risk += 60;
+        return Math.min(risk, 100);
+    }
+
+    function displayLog(logText, ip) {
+        const div = document.createElement("div");
+        const risk = calculateRisk(ip);
+        div.className = `log ${risk >= 80 ? 'high' : risk >= 40 ? 'medium' : 'low'}`;
+        div.textContent = `${logText} [Risk: ${risk}%]`;
+        document.getElementById("logs").prepend(div);
+    }
+
+    function blockIP() {
+        const ip = document.getElementById("ipInput").value.trim();
+        if (!ip || !ipProfiles[ip]) {
+            showMessage("⚠️ Invalid or unknown IP address.");
+            return;
+        }
+        if (blockedIPs.includes(ip)) {
+            showMessage("ℹ️ IP is already blocked.");
+            return;
+        }
+
+        const risk = calculateRisk(ip);
+        const profile = ipProfiles[ip];
+
+        // Decisive Logic: High risk or critical behavior allows for a clean block
+        if ((profile === "attacker" || profile === "suspicious") && risk >= 60) {
+            blockedIPs.push(ip);
+            score += 100;
+            health += 10;
+            showMessage(`✅ SECURED: ${ip} blocked. Threat neutralized.`);
+        } else {
+            falsePositive++;
+            score -= 50;
+            health -= 20;
+            showMessage(`❌ ERROR: ${ip} was a false positive or lacked evidence.`);
+        }
+
+        document.getElementById("ipInput").value = "";
+        updateStats();
+        checkGameStatus();
+    }
+
+    function generateMultipleLogs() {
+        for (let i = 0; i < 10; i++) generateLog();
+    }
+
+    function applyDamage(profile, event) {
+        if (profile === "attacker") health -= 5;
+        if (event.includes("config.php")) health -= 10;
+        if (profile === "normal") score += 2;
+    }
+
+    function updateStats() {
+        health = Math.max(0, Math.min(100, health));
+        document.getElementById("score").textContent = score;
+        document.getElementById("health").textContent = health;
+        document.getElementById("falsePositive").textContent = falsePositive;
+        document.getElementById("blockedCount").textContent = blockedIPs.length;
+    }
+
+    function checkGameStatus() {
+        if (health <= 0) showMessage("💀 SYSTEM CRITICAL: Defense failed. Servers compromised.");
+        else if (score >= 300 && falsePositive <= 1) showMessage("🏆 ELITE STATUS: Perimeter secured with high accuracy.");
+    }
+
+    function showMessage(msg) {
+        document.getElementById("message").innerHTML = msg;
+    }
+
+    function resetGame() {
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
