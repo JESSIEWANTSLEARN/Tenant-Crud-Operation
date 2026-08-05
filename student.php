@@ -16,6 +16,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
     $book_id    = intval($_POST['book_id']);
     $user_id    = intval($_SESSION['user_id']);
     $book_title = htmlspecialchars($_POST['book_title'] ?? '');
+    
+    // Form lease specific fields mapped to original variables to retain names
+    $monthly_rent = floatval($_POST['monthly_rent'] ?? 0);
+    $lease_type   = htmlspecialchars($_POST['lease_type'] ?? '');
  
     // [NEW] SAFETY NET 1: Block borrow if student has any unpaid fines
     $fine_check = $conn->prepare("
@@ -29,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
     $fine_check->close();
  
     if ($fine_row['c'] > 0) {
-        $message = "❌ You have unpaid fines. Please talk to the librarian to settle your balance before requesting a new book.";
+        $message = "❌ You have unpaid balances. Please talk to the property manager to settle your account before adding a new lease.";
         $message_type = "error";
     } else {
         // Check if already actively borrowing this book
@@ -37,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
         $active_check->bind_param("ii", $book_id, $user_id);
         $active_check->execute();
         if ($active_check->get_result()->num_rows > 0) {
-            $message = "✅ Book has been approved! You are now borrowing '$book_title'";
+            $message = "✅ Property lease has been approved! You are now managing '$book_title' under $lease_type terms";
             $message_type = "success";
             $active_check->close();
         } else {
@@ -48,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
             $pending_check->bind_param("ii", $book_id, $user_id);
             $pending_check->execute();
             if ($pending_check->get_result()->num_rows > 0) {
-                $message = "⏳ You already have a pending request for this book!";
+                $message = "⏳ You already have a pending lease request for this property!";
                 $message_type = "error";
                 $pending_check->close();
             } else {
@@ -71,13 +75,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
                 // Check availability
                 $avail = $conn->query("SELECT track_status FROM Books_Table WHERE book_id=$book_id")->fetch_assoc();
                 if (!$avail || $avail['track_status'] !== 'Available') {
-                    $message = "❌ This book is currently unavailable. Check back later!";
+                    $message = "❌ This property is currently unavailable for lease. Check back later!";
                     $message_type = "error";
                 } else {
                     $ins = $conn->prepare("INSERT INTO Borrow_Request_Table (book_id, user_id, request_date, status) VALUES (?, ?, CURDATE(), 'pending')");
                     $ins->bind_param("ii", $book_id, $user_id);
                     if ($ins->execute()) {
-                        $message = "✅ Request sent! Admin will review your request for '$book_title'";
+                        $message = "✅ Lease application sent! Management will review your submission for '$book_title' ($lease_type - ₱" . number_format($monthly_rent, 2) . "/mo)";
                         $message_type = "success";
                     } else {
                         $message = "❌ Error: " . $conn->error;
@@ -202,13 +206,13 @@ $has_unpaid      = count($my_fines) > 0;
  
 // Emoji map for genres
 $emoji_map = [
-    'Fiction'=>'🎭','Classic'=>'📜','Dystopian'=>'👁️','Sci-Fi'=>'🚀',
-    'Mystery'=>'🕵️','Romance'=>'❤️','Fantasy'=>'🪄','Non-Fiction'=>'📰',
+    'Fiction'=>'🏢','Classic'=>'🏠','Dystopian'=>'🏬','Sci-Fi'=>'🏨',
+    'Mystery'=>'🏡','Romance'=>'🏘️','Fantasy'=>'🏰','Non-Fiction'=>'🏗️',
     'Biography'=>'👤','Isekai'=>'⚡','Adventure'=>'🗺️',
 ];
 $genre_icons = [
-    'Fiction'=>'📖','Classic'=>'📜','Dystopian'=>'⚙️','Sci-Fi'=>'🚀',
-    'Mystery'=>'🕵️','Romance'=>'❤️','Fantasy'=>'🐉','Non-Fiction'=>'📰',
+    'Fiction'=>'🏢','Classic'=>'🏠','Dystopian'=>'🏬','Sci-Fi'=>'🏨',
+    'Mystery'=>'🏡','Romance'=>'🏘️','Fantasy'=>'🏰','Non-Fiction'=>'🏗️',
     'Biography'=>'👤','Isekai'=>'⚡','Adventure'=>'🗺️',
 ];
  
@@ -220,7 +224,7 @@ sort($genres_in_db);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Books Collection | Alexandria Library</title>
+    <title>Property Catalog | Prime Realty Management</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -296,6 +300,13 @@ sort($genres_in_db);
         .left-column .book-cover { flex: 0 0 100px; min-height: 120px; background: rgba(0,0,0,0.4); border-radius: 12px; display: flex; align-items: center; justify-content: center; padding: 8px; font-size: 2.8rem; }
         .left-column .book-card-meta { flex: 1; padding: 0; gap: 12px; display: flex; flex-direction: column; }
         .left-column .book-card-meta span { background: rgba(102,86,161,0.6); padding: 8px 12px; border-radius: 30px; font-size: 0.9rem; text-align: left; }
+        
+        /* LEASE FORM STYLES */
+        .lease-form-group { display: flex; gap: 10px; align-items: center; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+        .lease-form-group label { font-size: 0.85rem; font-weight: bold; color: #a8e6ff; min-width: 90px; }
+        .lease-form-group input, .lease-form-group select { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white; padding: 6px 10px; font-size: 0.85rem; outline: none; }
+        .lease-form-group select option { background: #221a3b; color: white; }
+
         .borrow-button-container { display: flex; gap: 10px; margin-top: 10px; }
         .btn-borrow { flex: 1; padding: 10px 16px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 0.9rem; }
         .btn-borrow:hover:not(:disabled) { background: #218838; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(40,167,69,0.4); }
@@ -362,21 +373,21 @@ sort($genres_in_db);
 <?php endif; ?>
  
 <header>
-    <div><strong>COLLEGE OF COMPUTING | PAMANTASAN NG CABUYAO</strong></div>
+    <div><strong>PRIME REALTY MANAGEMENT | PROPERTY RENTAL SYSTEM</strong></div>
     <nav>
         <a href="FAQ.php">FAQ</a>
         <span>Welcome, <?= htmlspecialchars($_SESSION['name_user']) ?></span>
         <a href="logout.php" class="login-btn logout-btn">Logout</a>
     </nav>
     <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search by title, author, or status...">
+        <input type="text" id="searchInput" placeholder="Search by property, location, or status...">
         <button id="searchBtn">Search</button>
     </div>
 </header>
  
 <!-- CAROUSEL -->
 <section class="topContent">
-    <h1>📚 Recommended Books</h1>
+    <h1>🏢 Featured Properties</h1>
     <div class="carousel-container">
         <a class="prev" id="carouselPrev">&#10094;</a>
         <div class="book-cards-grid" id="carouselGrid"></div>
@@ -386,7 +397,7 @@ sort($genres_in_db);
  
 <section class="bottomContent">
     <section class="left-column">
-        <h1>📖 Public Books Collection</h1>
+        <h1>🏡 Available Properties Catalog</h1>
  
         <!-- NOTIFICATION PANEL -->
         <?php if (count($notifications) > 0): ?>
@@ -397,8 +408,8 @@ sort($genres_in_db);
                 $icon  = $is_approved ? '✅' : '❌';
                 $label = $is_approved ? 'Approved' : 'Rejected';
                 $msg   = $is_approved
-                    ? "Your borrow request has been <strong>approved</strong>! You can now pick up the book."
-                    : "Your borrow request has been <strong>rejected</strong> by the librarian.";
+                    ? "Your lease application has been <strong>approved</strong>! Please check details for moving in."
+                    : "Your lease application has been <strong>rejected</strong> by property management.";
             ?>
             <div class="notif-item <?= $type ?>">
                 <span class="notif-icon"><?= $icon ?></span>
@@ -418,28 +429,28 @@ sort($genres_in_db);
     <section class="right-column">
         <div class="dashboard-panel">
  
-            <!-- STATS (4 boxes — last one turns red if has fines) -->
+            <!-- STATS (4 boxes) -->
             <div class="dash-stats">
                 <div class="dash-stat-item">
                     <span class="ds-val white"><?= $total_books ?></span>
-                    <span class="ds-lbl">Total Books</span>
+                    <span class="ds-lbl">Total Units</span>
                 </div>
                 <div class="dash-stat-item">
                     <span class="ds-val green"><?= $avail_count ?></span>
-                    <span class="ds-lbl">Available</span>
+                    <span class="ds-lbl">Vacant</span>
                 </div>
                 <div class="dash-stat-item">
                     <span class="ds-val orange"><?= $borrow_count ?></span>
-                    <span class="ds-lbl">Borrowed</span>
+                    <span class="ds-lbl">Occupied</span>
                 </div>
                 <div class="dash-stat-item">
                     <span class="ds-val purple"><?= $my_borrow_count ?></span>
-                    <span class="ds-lbl">My Borrows</span>
+                    <span class="ds-lbl">My Leases</span>
                 </div>
             </div>
  
             <!-- ACTIVE BORROWS -->
-            <div class="dash-section-header">📌 My Active Borrows</div>
+            <div class="dash-section-header">📌 My Active Leases</div>
             <?php if (count($active_only) > 0): ?>
             <div class="dash-borrow-list">
                 <?php foreach ($active_only as $txn):
@@ -447,17 +458,17 @@ sort($genres_in_db);
                 <div class="dash-borrow-item">
                     <div class="dbi-title" title="<?= htmlspecialchars($txn['title']) ?>"><?= htmlspecialchars($txn['title']) ?></div>
                     <div class="dbi-due <?= $is_overdue ? 'overdue' : '' ?>">
-                        Due: <?= htmlspecialchars($txn['due_date']) ?><?= $is_overdue ? ' ⚠️ Overdue' : '' ?>
+                        Due: <?= htmlspecialchars($txn['due_date']) ?><?= $is_overdue ? ' ⚠️ Payment Overdue' : '' ?>
                     </div>
                 </div>
                 <?php endforeach; ?>
             </div>
             <?php else: ?>
-            <div class="dash-empty">No active borrows.</div>
+            <div class="dash-empty">No active unit leases.</div>
             <?php endif; ?>
  
             <!-- PENDING REQUESTS -->
-            <div class="dash-section-header">⏳ My Pending Requests (<?= count($my_pending_full) ?>)</div>
+            <div class="dash-section-header">⏳ My Pending Applications (<?= count($my_pending_full) ?>)</div>
             <?php if (count($my_pending_full) > 0): ?>
             <div class="dash-pending-list">
                 <?php foreach ($my_pending_full as $pr): ?>
@@ -471,12 +482,12 @@ sort($genres_in_db);
                 <?php endforeach; ?>
             </div>
             <?php else: ?>
-            <div class="dash-empty">No pending requests.</div>
+            <div class="dash-empty">No pending lease applications.</div>
             <?php endif; ?>
  
             <!-- [NEW] UNPAID FINES SECTION — only shows if student has fines -->
             <?php if ($has_unpaid): ?>
-            <div class="dash-section-header" style="color:#f87171;">💰 My Unpaid Fines</div>
+            <div class="dash-section-header" style="color:#f87171;">💰 My Unpaid Balances</div>
             <div class="dash-fines-list">
                 <?php foreach ($my_fines as $fine): ?>
                 <div class="dash-fine-item">
@@ -486,11 +497,11 @@ sort($genres_in_db);
                 <?php endforeach; ?>
             </div>
             <div class="dash-fine-total">
-                <span>Total Due</span>
+                <span>Total Balance</span>
                 <span>₱<?= number_format($total_my_fines, 2) ?></span>
             </div>
             <div class="dash-fine-notice">
-                ⚠️ You cannot request books while you have unpaid fines. Please talk to the librarian to settle your balance.
+                ⚠️ You cannot submit new lease records while you have unpaid balances. Please settle your account with management.
             </div>
             <?php endif; ?>
  
@@ -499,7 +510,7 @@ sort($genres_in_db);
 </section>
  
 <footer>
-    <p>&copy; 2026 Pamantasan ng Cabuyao - College of Computing Studies. All rights reserved.</p>
+    <p>&copy; 2026 Prime Realty Management Systems. All rights reserved.</p>
 </footer>
  
 <script>
@@ -510,7 +521,7 @@ const booksData = <?= json_encode(array_map(function($b) use ($emoji_map) {
         'author'     => $b['author'],
         'status'     => $b['track_status'],
         'genre'      => $b['genre'] ?? '',
-        'coverEmoji' => $emoji_map[$b['genre'] ?? ''] ?? '📘',
+        'coverEmoji' => $emoji_map[$b['genre'] ?? ''] ?? '🏢',
     ];
 }, $all_books)) ?>;
  
@@ -529,12 +540,11 @@ function escapeHtml(str) {
  
 function getButtonState(book) {
     const id = parseInt(book.id);
-    // [NEW] Disable ALL borrow buttons if student has unpaid fines
-    if (hasUnpaid)               return { disabled: true, text: '💰 Settle Fines First' };
-    if (myBorrows.includes(id))  return { disabled: true, text: '📖 Already Borrowing' };
-    if (myPending.includes(id))  return { disabled: true, text: '⏳ Request Pending' };
-    if (book.status !== 'Available') return { disabled: true, text: '❌ Currently Unavailable' };
-    return { disabled: false, text: '📤 Request to Borrow' };
+    if (hasUnpaid)               return { disabled: true, text: '💰 Settle Balance First' };
+    if (myBorrows.includes(id))  return { disabled: true, text: '🏡 Already Leasing' };
+    if (myPending.includes(id))  return { disabled: true, text: '⏳ Application Pending' };
+    if (book.status !== 'Available') return { disabled: true, text: '❌ Unit Unavailable' };
+    return { disabled: false, text: '📤 Add Lease Record' };
 }
  
 function generateHorizontalCard(book) {
@@ -545,17 +555,36 @@ function generateHorizontalCard(book) {
             <div class="card-row">
                 <div class="book-cover">${book.coverEmoji}</div>
                 <div class="book-card-meta">
-                    <span>✍️ Author: ${escapeHtml(book.author)}</span>
+                    <span>✍️ Landlord/Owner: ${escapeHtml(book.author)}</span>
                     <span>📌 Status: ${escapeHtml(book.status)}</span>
-                    <span>🏷️ Genre: ${escapeHtml(book.genre || 'N/A')}</span>
-                    <div class="borrow-button-container">
-                        <form method="POST" action="Student.php" style="width:100%;margin:0;">
-                            <input type="hidden" name="action" value="request">
-                            <input type="hidden" name="book_id" value="${book.id}">
-                            <input type="hidden" name="book_title" value="${escapeHtml(book.title)}">
+                    <span>🏷️ Property Type: ${escapeHtml(book.genre || 'N/A')}</span>
+                    
+                    <!-- Form for monthly rent and lease type inputs -->
+                    <form method="POST" action="Student.php" style="width:100%; margin:0; display:flex; flex-direction:column; gap:8px;">
+                        <input type="hidden" name="action" value="request">
+                        <input type="hidden" name="book_id" value="${book.id}">
+                        <input type="hidden" name="book_title" value="${escapeHtml(book.title)}">
+                        
+                        <div class="lease-form-group">
+                            <label>Monthly Rent:</label>
+                            <input type="number" name="monthly_rent" step="0.01" placeholder="e.g. 15000" required>
+                        </div>
+                        
+                        <div class="lease-form-group">
+                            <label>Lease Type:</label>
+                            <select name="lease_type" required>
+                                <option value="">Select Lease Type</option>
+                                <option value="Fixed Term">Fixed Term</option>
+                                <option value="Month-to-Month">Month-to-Month</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="Residential">Residential</option>
+                            </select>
+                        </div>
+
+                        <div class="borrow-button-container">
                             <button type="submit" class="btn-borrow" ${btn.disabled ? 'disabled' : ''}>${btn.text}</button>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>`;
@@ -579,7 +608,7 @@ function renderCarousel() {
     if (!c) return;
     c.innerHTML = recommendedBooks.length
         ? recommendedBooks.map(generateVerticalCard).join('')
-        : '<p style="padding:20px;color:#aaa;">No available books right now.</p>';
+        : '<p style="padding:20px;color:#aaa;">No available properties right now.</p>';
 }
  
 function filterAndRender() {
@@ -593,7 +622,7 @@ function filterAndRender() {
     if (!c) return;
     c.innerHTML = filtered.length
         ? filtered.map(generateHorizontalCard).join('')
-        : `<div style="text-align:center;padding:40px;background:rgba(0,0,0,0.5);border-radius:30px;">📭 No books match your search or genre filter.</div>`;
+        : `<div style="text-align:center;padding:40px;background:rgba(0,0,0,0.5);border-radius:30px;">📭 No properties match your search or filter.</div>`;
 }
  
 document.getElementById('searchInput')?.addEventListener('input', () => { currentSearch = document.getElementById('searchInput').value; filterAndRender(); });
