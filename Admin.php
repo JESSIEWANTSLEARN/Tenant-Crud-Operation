@@ -293,9 +293,9 @@ tbody tr:last-child td{border-bottom:none;}
 <aside class="sidebar">
     <div class="sidebar-logo">
         <div class="logo-title">COLLEGE OF COMPUTING</div>
-        <div class="logo-sub">Library Management System</div>
+        <div class="logo-sub">Lease Management System</div>
     </div>
-    <div class="nav-section">Library</div>
+    <div class="nav-section">Admin </div>
     <div class="nav-item active" onclick="showTab('books',this)"><span class="icon">📚</span><span>Books Inventory</span></div>
     <div class="nav-item" onclick="showTab('requests',this)">
         <span class="icon">📋</span><span>Borrow Requests</span>
@@ -340,7 +340,7 @@ tbody tr:last-child td{border-bottom:none;}
     <!-- BOOKS TAB -->
     <div id="books" class="tab-panel active">
         <div class="panel-card">
-            <div class="panel-header"><h2>📚 Books Inventory</h2><button class="btn btn-primary" onclick="openModal('addBookModal')">+ Add Book</button></div>
+            <div class="panel-header"><h2>📚 Lease Inventory</h2><button class="btn btn-primary" onclick="openModal('addBookModal')">+ Add Book</button></div>
             <table>
                 <thead><tr><th>ID</th><th>Title</th><th>Author</th><th>Genre</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody>
@@ -369,7 +369,7 @@ tbody tr:last-child td{border-bottom:none;}
     <!-- REQUESTS TAB -->
     <div id="requests" class="tab-panel">
         <div class="panel-card">
-            <div class="panel-header"><h2>📋 Pending Borrow Requests</h2></div>
+            <div class="panel-header"><h2>📋 Pending  Requests</h2></div>
             <table>
                 <thead><tr><th>ID</th><th>Student</th><th>Book</th><th>Requested</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody>
@@ -404,7 +404,7 @@ tbody tr:last-child td{border-bottom:none;}
     <!-- BORROWERS TAB -->
     <div id="borrowers" class="tab-panel">
         <div class="panel-card">
-            <div class="panel-header"><h2>👥 Active Borrowers</h2></div>
+            <div class="panel-header"><h2>👥 Active Tenant</h2></div>
             <table>
                 <thead><tr><th>Student ID</th><th>Name</th><th>Book</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody>
@@ -506,7 +506,7 @@ tbody tr:last-child td{border-bottom:none;}
         <div class="panel-card">
             <div class="panel-header">
                 <h2>🧑‍💼 Pending Account Registrations</h2>
-                <small style="color:var(--text-muted)">Students cannot log in until approved</small>
+                <small style="color:var(--text-muted)">Tenant cannot log in until approved</small>
             </div>
             <table>
                 <thead><tr><th>Student ID</th><th>Full Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
@@ -549,7 +549,7 @@ tbody tr:last-child td{border-bottom:none;}
     <!-- BOOK COLLECTION PREVIEW TAB -->
     <div id="bookcollection" class="tab-panel">
         <button class="bc-back-btn" onclick="showTab('books', document.querySelector('.nav-item'))">← Back to Dashboard</button>
-        <div class="bc-admin-notice">🔍 <strong>Admin Preview — Book Collection View</strong> &nbsp;|&nbsp; Read-only preview of what students see.</div>
+        <div class="bc-admin-notice">🔍 <strong>Admin Preview — Book Collection View</strong> &nbsp;|&nbsp; Read-only preview of what tenant see.</div>
         <div class="bc-search-row">
             <input type="text" id="bcSearch" placeholder="Search by title, author, genre or status..." oninput="bcFilter()">
             <button onclick="bcFilter()">Search</button>
