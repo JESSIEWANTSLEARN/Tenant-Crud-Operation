@@ -134,8 +134,8 @@
             <div class="input-group">
                 <select name="role" required>
                     <option value="" disabled selected>Identify your role...</option>
-                    <option value="student">Student</option>
-                    <option value="admin">Librarian / Admin</option>
+                    <option value="student">Tenant </option>
+                    <option value="admin">Tenant User / Admin</option>
                 </select>
             </div>
             <div class="input-group">
