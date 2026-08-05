@@ -495,18 +495,6 @@ sort($genres_in_db);
             <?php endif; ?>
  
         </div>
- 
-        <!-- GENRES -->
-        <div class="genres-section">
-            <h2>🎭 Genres</h2>
-            <ul id="genreList">
-                <li data-genre="all" class="active-genre">✨ All Genres</li>
-                <?php foreach ($genres_in_db as $g):
-                    $icon = $genre_icons[$g] ?? '📘'; ?>
-                <li data-genre="<?= htmlspecialchars($g) ?>"><?= $icon ?> <?= htmlspecialchars($g) ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
     </section>
 </section>
  
