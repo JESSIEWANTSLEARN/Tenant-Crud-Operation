@@ -126,7 +126,6 @@ hr {
             height: 100vh;
         }
 
-
         section {
             position: absolute;
             width: 100%;
@@ -278,13 +277,14 @@ hr {
         <hr>
 
         <h3>4. Who developed this project?</h3>
-        <p>This project was developed by <strong>Group 1</strong> as part of the CCS110 course.</p>
+        <p>This project was developed by <strong>Unpaid Dev</strong> as part of the CCS112 course.</p>
        <ul style="list-style: none; padding: 0;">
     <li><strong>Project Leader & Full-Stack Developer:</strong> [John Jessie R Palarao]</li>
     <li><strong>UI/UX Designer:</strong> [John Paul Villasantal]</li>
-    <li><strong>Support:</strong> [Cyron Vinz Noah Corminal]</li>
-    <li><strong>Documentation:</strong> [Taironne James Sieterales]</li>
-    <li><strong>Documentation:</strong> [Christophe Zarate]</li>
+    <li><strong>QA:</strong> [John Brian Lorena]</li>
+    <li><strong>Database Administrator:</strong> [Taironne James Sieterales]</li>
+    <li><string>Documentation Lead:</strong> [Villarete Aicee Claire] </li>
+    
 </ul>
         <hr>
 
