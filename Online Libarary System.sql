@@ -100,7 +100,7 @@ INSERT INTO Books_Table (title, author, track_status, genre) VALUES
 -- 1 admin, 8 accounts
 INSERT INTO User_Table (user_id, name_user, email, password, role, account_status) 
 VALUES
-(2041,     'John Jessie Palarao',     'palaraojesie23@gmail.com',    'admin123', 'admin',   'approved'),
+(2041,     'John Jessie Palarao',     'palarao@gmail.com',    'admin123', 'admin',   'approved'),
 (20240045, 'Suomii Miyama',           'suomii.m@ucmail.com',         'pass1234', 'student', 'approved'),
 (20240067, 'Joshua Roque Greganda',   'joshua.greganda@ucmail.com',  'pass1234', 'student', 'approved'),
 (20240089, 'Vonluiz Malinao',         'vonluiz.m@ucmail.com',        'pass1234', 'student', 'approved'),
