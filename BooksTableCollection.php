@@ -1,3 +1,12 @@
+
+npm create vite@latest framework -- --template react
+cd framework
+npm install
+npm run dev
+http://localhost:5173
+
+
+
 <?php include 'db.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
