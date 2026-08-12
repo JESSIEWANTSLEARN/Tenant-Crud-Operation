@@ -122,20 +122,20 @@
 
     <div class="brand-header">
         <h1>PAMANTASAN NG CABUYAO</h1>
-        <p>College of Computing Studies | Online Library System</p>
+        <p>College of Computing Studies | Online TenantRental System</p>
     </div>
 
     <input type="radio" name="auth-toggle" id="tab1" checked>
     <input type="radio" name="auth-toggle" id="tab2">
 
     <div class="auth-card" id="login-section">
-        <h2>Librarian & Student Login</h2>
+        <h2> & Tenant Login</h2>
         <form action="login_process.php" method="POST">
             <div class="input-group">
                 <select name="role" required>
                     <option value="" disabled selected>Identify your role...</option>
-                    <option value="student">Student</option>
-                    <option value="admin">Librarian / Admin</option>
+                    <option value="student">Tenant </option>
+                    <option value="admin">Tenant User / Admin</option>
                 </select>
             </div>
             <div class="input-group">
@@ -157,9 +157,9 @@
         <div class="input-group">
             <select name="role" id="reg-role" required>
                 <option value="" disabled selected>Registering as...</option>
-                <option value="student">Student</option>
+                <option value="student">Tenant</option>
             /* --- Removed admin role if you want to --- *
-                <option value="admin">Librarian / Admin</option>
+                <option value="admin"> / Admin</option>
             </select>
         </div>
         <div class="input-group">
